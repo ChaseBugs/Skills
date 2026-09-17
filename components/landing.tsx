@@ -1,16 +1,76 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   ShieldCheck,
   ArrowRight,
   LayoutDashboard,
   QrCode,
   Cable,
+  Maximize2,
+  X,
 } from "lucide-react";
 import { useLocale } from "./locale-provider";
 import { LangSwitch } from "./lang-switch";
+
+function Lightbox({
+  src,
+  alt,
+  caption,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className="image-lightbox"
+      onCancel={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <button className="icon-button lightbox-close" onClick={onClose}>
+        <X size={20} />
+      </button>
+      <img src={src} alt={alt} />
+      <p>{caption}</p>
+    </dialog>
+  );
+}
+
 export function Landing() {
   const { t } = useLocale();
+  const [zoomed, setZoomed] = useState<number | null>(null);
+  const shots = [
+    {
+      src: "/marketing/overview.png",
+      alt: t.landing.shotOverviewAlt,
+      caption: t.landing.shotOverviewCaption,
+      mobile: false,
+    },
+    {
+      src: "/marketing/matrix.png",
+      alt: t.landing.shotMatrixAlt,
+      caption: t.landing.shotMatrixCaption,
+      mobile: false,
+    },
+    {
+      src: "/marketing/passport.png",
+      alt: t.landing.shotPassportAlt,
+      caption: t.landing.shotPassportCaption,
+      mobile: true,
+    },
+  ];
   return (
     <main className="landing-page">
       <header className="landing-nav">
@@ -42,30 +102,27 @@ export function Landing() {
         </Link>
       </section>
       <section className="landing-shots">
-        <figure className="landing-shot">
-          <img
-            src="/marketing/overview.png"
-            alt={t.landing.shotOverviewAlt}
-            loading="lazy"
-          />
-          <figcaption>{t.landing.shotOverviewCaption}</figcaption>
-        </figure>
-        <figure className="landing-shot">
-          <img
-            src="/marketing/matrix.png"
-            alt={t.landing.shotMatrixAlt}
-            loading="lazy"
-          />
-          <figcaption>{t.landing.shotMatrixCaption}</figcaption>
-        </figure>
-        <figure className="landing-shot landing-shot-mobile">
-          <img
-            src="/marketing/passport.png"
-            alt={t.landing.shotPassportAlt}
-            loading="lazy"
-          />
-          <figcaption>{t.landing.shotPassportCaption}</figcaption>
-        </figure>
+        {shots.map((shot, i) => (
+          <figure
+            className={
+              "landing-shot " + (shot.mobile ? "landing-shot-mobile" : "")
+            }
+            key={shot.src}
+          >
+            <button
+              type="button"
+              className="landing-shot-trigger"
+              onClick={() => setZoomed(i)}
+              aria-label={shot.caption}
+            >
+              <img src={shot.src} alt={shot.alt} loading="lazy" />
+              <span className="landing-shot-zoom">
+                <Maximize2 size={14} />
+              </span>
+            </button>
+            <figcaption>{shot.caption}</figcaption>
+          </figure>
+        ))}
       </section>
       <section className="landing-features">
         <h2>{t.landing.featuresTitle}</h2>
@@ -101,6 +158,14 @@ export function Landing() {
           {t.landing.navLogin} <ArrowRight size={14} />
         </Link>
       </footer>
+      {zoomed !== null && (
+        <Lightbox
+          src={shots[zoomed].src}
+          alt={shots[zoomed].alt}
+          caption={shots[zoomed].caption}
+          onClose={() => setZoomed(null)}
+        />
+      )}
     </main>
   );
 }

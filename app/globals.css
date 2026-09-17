@@ -1696,6 +1696,15 @@ tbody tr:hover {
   overflow: hidden;
   box-shadow: var(--shadow);
 }
+.landing-shot-trigger {
+  display: block;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
 .landing-shot img {
   display: block;
   width: 100%;
@@ -1704,11 +1713,70 @@ tbody tr:hover {
   object-position: top;
   background: var(--surface-2);
 }
+.landing-shot-zoom {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #060d19b3;
+  color: #fff;
+  backdrop-filter: blur(3px);
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.landing-shot-trigger:hover .landing-shot-zoom,
+.landing-shot-trigger:focus-visible .landing-shot-zoom {
+  opacity: 1;
+}
 .landing-shot figcaption {
   padding: 12px 16px;
   font-size: 12px;
   color: var(--muted);
   border-top: 1px solid var(--border);
+}
+.image-lightbox {
+  background: none;
+  border: 0;
+  padding: 0;
+  width: min(1100px, 94vw);
+  max-height: 92vh;
+  overflow: visible;
+}
+.image-lightbox::backdrop {
+  background: #060d19d9;
+  backdrop-filter: blur(4px);
+}
+.image-lightbox img {
+  display: block;
+  width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 20px 100px #0007;
+}
+.image-lightbox p {
+  margin: 14px 0 0;
+  text-align: center;
+  color: #cdd6e3;
+  font-size: 13px;
+}
+.lightbox-close {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  background: #060d19b3;
+  color: #fff;
+}
+.lightbox-close:hover {
+  background: #060d19d9;
+  color: #fff;
 }
 .landing-features {
   max-width: 1000px;
