@@ -1,0 +1,39 @@
+{
+  "name": "skills-passport",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "test:integration": "tsx --env-file=.env.local tests/integration.ts",
+    "test:browser": "tsx --env-file=.env.local tests/browser.ts",
+    "account:create": "tsx --env-file=.env.local scripts/provision.ts",
+    "format": "prettier --write app components lib scripts tests docs README.md Memory next.config.ts package.json tsconfig.json",
+    "format:check": "prettier --check app components lib scripts tests docs README.md Memory next.config.ts package.json tsconfig.json"
+  },
+  "dependencies": {
+    "lucide-react": "1.47.0",
+    "mysql2": "3.24.4",
+    "next": "16.3.5",
+    "qrcode": "1.5.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^22",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "prettier": "3.9.7",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
