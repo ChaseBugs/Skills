@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { X, FileCheck2 } from "lucide-react";
 import { initials } from "@/lib/domain";
+import { useLocale } from "./locale-provider";
 export function Avatar({
   name,
   photoId,
@@ -39,17 +40,25 @@ export function Avatar({
     </span>
   );
 }
-export function Badge({ children }: { children: React.ReactNode }) {
+export function Badge({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone?: "success" | "danger" | "warning" | "neutral";
+}) {
   const text = String(children);
-  const tone = ["Valid", "Verified", "Active", "HR"].includes(text)
-    ? "success"
-    : ["Expired", "Revoked", "Inactive"].includes(text)
-      ? "danger"
-      : ["Expiring soon", "Pending review"].includes(text)
-        ? "warning"
-        : "neutral";
+  const resolved =
+    tone ||
+    (["Valid", "Verified", "Active", "HR"].includes(text)
+      ? "success"
+      : ["Expired", "Revoked", "Inactive"].includes(text)
+        ? "danger"
+        : ["Expiring soon", "Pending review"].includes(text)
+          ? "warning"
+          : "neutral");
   return (
-    <span className={"badge " + tone}>
+    <span className={"badge " + resolved}>
       <i />
       {children}
     </span>
@@ -82,6 +91,7 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const { t } = useLocale();
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
@@ -100,7 +110,7 @@ export function Modal({
         <h2>{title}</h2>
         <button
           className="icon-button"
-          aria-label="Close dialog"
+          aria-label={t.modal.closeDialog}
           onClick={onClose}
         >
           <X size={20} />

@@ -88,6 +88,7 @@ export async function route(req: NextRequest, parts: string[]) {
         .object({
           email: z.email().max(190),
           password: z.string().min(1).max(256),
+          remember: z.boolean().default(false),
         })
         .parse(await req.json());
       const email = input.email.toLowerCase();
@@ -125,9 +126,10 @@ export async function route(req: NextRequest, parts: string[]) {
         fingerprint,
       ]);
       const token = secret();
+      const maxAge = input.remember ? 60 * 60 * 24 * 30 : 60 * 60 * 12;
       await execute(
-        "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES (?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 12 HOUR))",
-        [hash(token), user.id],
+        "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES (?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL ? SECOND))",
+        [hash(token), user.id, maxAge],
       );
       const response = json({ ok: true });
       response.cookies.set("skills_session", token, {
@@ -135,7 +137,7 @@ export async function route(req: NextRequest, parts: string[]) {
         sameSite: "lax",
         secure: process.env.COOKIE_SECURE === "true",
         path: "/",
-        maxAge: 43200,
+        maxAge,
       });
       return response;
     }

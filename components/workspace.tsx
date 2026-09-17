@@ -41,28 +41,43 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { Workspace, Employee, Qualification } from "@/lib/domain";
 import { dateLabel, csvCell } from "@/lib/domain";
+import {
+  type Dictionary,
+  statusLabel,
+  statusTone,
+  verificationLabel,
+  verificationTone,
+  activeLabel,
+  activeTone,
+  matrixCellLabel,
+} from "@/lib/i18n";
 import { Avatar, Badge, Empty, Modal } from "./ui";
+import { useLocale } from "./locale-provider";
+import { LangSwitch } from "./lang-switch";
 
-const navigation: { section: string; items: [string, string, LucideIcon][] }[] =
-  [
+function getNavigation(
+  t: Dictionary,
+): { section: string; items: [string, string, LucideIcon][] }[] {
+  return [
     {
-      section: "WORKSPACE",
+      section: t.nav.workspaceSection,
       items: [
-        ["", "Overview", LayoutDashboard],
-        ["employees", "Employees", Users],
-        ["matrix", "Skills matrix", Grid2X2],
-        ["competencies", "Competencies", Award],
-        ["documents", "Documents", Files],
+        ["", t.nav.overview, LayoutDashboard],
+        ["employees", t.nav.employees, Users],
+        ["matrix", t.nav.matrix, Grid2X2],
+        ["competencies", t.nav.competencies, Award],
+        ["documents", t.nav.documents, Files],
       ],
     },
     {
-      section: "TOOLS",
+      section: t.nav.toolsSection,
       items: [
-        ["passports", "QR passports", QrCode],
-        ["reports", "Excel connection", Cable],
+        ["passports", t.nav.passports, QrCode],
+        ["reports", t.nav.reports, Cable],
       ],
     },
   ];
+}
 type DialogState =
   | { type: "employee"; employee?: Employee }
   | { type: "qualification"; employee: Employee }
@@ -96,6 +111,8 @@ export async function api(path: string, method = "GET", body?: unknown) {
 export function WorkspaceApp() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLocale();
+  const navigation = getNavigation(t);
   const view = pathname.split("/")[2] || "";
   const employeeId = pathname.split("/")[3];
   const [data, setData] = useState<Workspace | null>(null),
@@ -162,7 +179,7 @@ export function WorkspaceApp() {
   async function mutate(path: string, method: string, body?: unknown) {
     const result = await api(path, method, body);
     await load();
-    setNotice("Changes saved");
+    setNotice(t.common.changesSaved);
     return result;
   }
   async function action(path: string, method: string, body?: unknown) {
@@ -176,14 +193,16 @@ export function WorkspaceApp() {
     return (
       <main className="center-state">
         <ShieldCheck size={40} />
-        <h2>{loading ? "Opening your workspace…" : "Workspace unavailable"}</h2>
+        <h2>
+          {loading ? t.common.openingWorkspace : t.common.workspaceUnavailable}
+        </h2>
         {error && (
           <>
             <p role="alert">{error}</p>
             <button className="button primary" onClick={load}>
-              Try again
+              {t.common.tryAgain}
             </button>
-            <Link href="/login">Back to sign in</Link>
+            <Link href="/login">{t.common.backToSignIn}</Link>
           </>
         )}
       </main>
@@ -210,7 +229,7 @@ export function WorkspaceApp() {
   const title = selectedEmployee
     ? selectedEmployee.name
     : navigation.flatMap((n) => n.items).find((n) => n[0] === view)?.[1] ||
-      "Overview";
+      t.nav.overview;
   const filtered = data.employees.filter(
     (e) =>
       `${e.name} ${e.ssn} ${e.jobTitle} ${e.department} ${e.site}`
@@ -223,12 +242,12 @@ export function WorkspaceApp() {
   );
   function exportCsv() {
     const columns = [
-      "Name",
-      "Employee ID",
-      "Job title",
-      "Department",
-      "Site",
-      "Status",
+      t.table.name,
+      t.table.employeeId,
+      t.dialogs.jobTitle,
+      t.table.department,
+      t.dialogs.site,
+      t.table.status,
     ];
     const csv = [
       columns,
@@ -238,13 +257,13 @@ export function WorkspaceApp() {
         e.jobTitle,
         e.department,
         e.site,
-        e.active ? "Active" : "Inactive",
+        activeLabel(e.active, t),
       ]),
     ]
       .map((row) => row.map(csvCell).join(","))
       .join("\r\n");
     const url = URL.createObjectURL(
-      new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }),
+      new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" }),
     );
     const a = document.createElement("a");
     a.href = url;
@@ -258,12 +277,12 @@ export function WorkspaceApp() {
         <table>
           <thead>
             <tr>
-              <th>Employee</th>
-              <th>{compact ? "Department" : "Employee ID"}</th>
-              {!compact && <th>Department / site</th>}
-              <th>Qualifications</th>
-              <th>Status</th>
-              <th aria-label="Open employee" />
+              <th>{t.table.employee}</th>
+              <th>{compact ? t.table.department : t.table.employeeId}</th>
+              {!compact && <th>{t.table.departmentSite}</th>}
+              <th>{t.table.qualifications}</th>
+              <th>{t.table.status}</th>
+              <th aria-label={t.table.openEmployee} />
             </tr>
           </thead>
           <tbody>
@@ -305,7 +324,10 @@ export function WorkspaceApp() {
                     <div className="qualification-progress">
                       <span>
                         {count}
-                        <span className="muted"> / {eq.length} valid</span>
+                        <span className="muted">
+                          {" "}
+                          {t.table.validSuffix(eq.length)}
+                        </span>
                       </span>
                       <div className="tiny-track">
                         <i
@@ -317,12 +339,14 @@ export function WorkspaceApp() {
                     </div>
                   </td>
                   <td>
-                    <Badge>{e.active ? "Active" : "Inactive"}</Badge>
+                    <Badge tone={activeTone(e.active)}>
+                      {activeLabel(e.active, t)}
+                    </Badge>
                   </td>
                   <td>
                     <Link
                       className="icon-button"
-                      aria-label={"View " + e.name}
+                      aria-label={t.table.viewEmployee(e.name)}
                       href={"/workspace/employees/" + e.id}
                     >
                       <ArrowUpRight size={17} />
@@ -335,8 +359,8 @@ export function WorkspaceApp() {
         </table>
         {!es.length && (
           <Empty
-            title="No employees found"
-            description="Try another search, or add your first employee."
+            title={t.employees.noneFound}
+            description={t.employees.noneFoundDesc}
           />
         )}
       </div>
@@ -347,7 +371,7 @@ export function WorkspaceApp() {
       {menu && (
         <button
           className="menu-overlay"
-          aria-label="Close navigation"
+          aria-label={t.topbar.closeNav}
           onClick={() => setMenu(false)}
         />
       )}
@@ -359,14 +383,14 @@ export function WorkspaceApp() {
           <strong>
             skills<span className="brand-dot">.</span>
           </strong>
-          <span className="brand-tag">WORKSPACE</span>
+          <span className="brand-tag">{t.nav.workspaceSection}</span>
         </Link>
         <div className="company-switch">
           <Building2 size={21} />
           <div>
-            <span>Company workspace</span>
+            <span>{t.sidebar.companyWorkspace}</span>
             <select
-              aria-label="Company workspace"
+              aria-label={t.sidebar.companyWorkspace}
               value={data.company.id}
               disabled={loading}
               onChange={(e) => {
@@ -408,21 +432,21 @@ export function WorkspaceApp() {
         <div className="sidebar-bottom">
           <div className="sidebar-tip">
             <QrCode size={22} />
-            <strong>Every skill. One scan.</strong>
-            <p>A live skills passport for every person on your team.</p>
+            <strong>{t.sidebar.tipTitle}</strong>
+            <p>{t.sidebar.tipBody}</p>
             <Link href="/workspace/passports">
-              View passports <ArrowRight size={14} />
+              {t.sidebar.viewPassports} <ArrowRight size={14} />
             </Link>
           </div>
           <div className="sidebar-user">
             <Avatar name={data.user.name} />
             <div>
               <strong>{data.user.name}</strong>
-              <small>Human Resources</small>
+              <small>{t.sidebar.role}</small>
             </div>
             <button
-              title="Sign out"
-              aria-label="Sign out"
+              title={t.sidebar.signOut}
+              aria-label={t.sidebar.signOut}
               className="icon-button"
               onClick={async () => {
                 await api("auth/logout", "POST");
@@ -439,23 +463,24 @@ export function WorkspaceApp() {
           <div className="breadcrumbs">
             <button
               className="icon-button mobile-menu"
-              aria-label="Open navigation"
+              aria-label={t.topbar.openNav}
               onClick={() => setMenu(true)}
             >
               <Menu size={21} />
             </button>
-            <span>Workspace</span>
+            <span>{t.topbar.workspace}</span>
             <span>/</span>
             <strong>{title}</strong>
           </div>
           <div className="topbar-actions">
             <span className="live-label">
               <i />
-              Live workspace
+              {t.topbar.liveWorkspace}
             </span>
+            <LangSwitch />
             <button
               className="icon-button"
-              aria-label="Toggle theme"
+              aria-label={t.topbar.toggleTheme}
               onClick={() => {
                 const next = !dark;
                 setDark(next);
@@ -470,7 +495,7 @@ export function WorkspaceApp() {
             <Link
               href="/workspace#attention"
               className="icon-button notification"
-              aria-label="View expiring qualifications"
+              aria-label={t.topbar.viewExpiring}
             >
               <Bell size={19} />
               {attention.length > 0 && <i />}
@@ -484,7 +509,7 @@ export function WorkspaceApp() {
             <div role="alert" className="alert error">
               {error}
               <button className="text-button" onClick={() => setError("")}>
-                Dismiss
+                {t.common.dismiss}
               </button>
             </div>
           )}
@@ -492,39 +517,41 @@ export function WorkspaceApp() {
             <div>
               <div className="eyebrow">
                 {selectedEmployee ? (
-                  <Link href="/workspace/employees">EMPLOYEES / PROFILE</Link>
+                  <Link href="/workspace/employees">
+                    {t.overview.eyebrowProfile}
+                  </Link>
                 ) : view ? (
-                  "WORKFORCE MANAGEMENT"
+                  t.overview.eyebrowWorkforce
                 ) : (
-                  "YOUR WORKFORCE, AT A GLANCE"
+                  t.overview.eyebrowGlance
                 )}
               </div>
-              <h1>{selectedEmployee ? "Employee profile" : title}</h1>
+              <h1>{selectedEmployee ? t.overview.employeeProfile : title}</h1>
               <p>
                 {selectedEmployee
-                  ? "Qualifications, evidence and a passport that stays up to date."
+                  ? t.overview.subtitleProfile
                   : view === "employees"
-                    ? "The people behind every project."
+                    ? t.overview.subtitleEmployees
                     : view === "matrix"
-                      ? "See capabilities and qualification gaps across your team."
+                      ? t.overview.subtitleMatrix
                       : view === "competencies"
-                        ? "A shared vocabulary for your company’s capabilities."
+                        ? t.overview.subtitleCompetencies
                         : view === "documents"
-                          ? "The evidence behind your team’s qualifications."
+                          ? t.overview.subtitleDocuments
                           : view === "passports"
-                            ? "Print a label. Share a profile. Keep qualifications within reach."
+                            ? t.overview.subtitlePassports
                             : view === "reports"
-                              ? "Connect Excel directly to your company’s live data."
-                              : "A clear view of your team’s skills and what needs attention."}
+                              ? t.overview.subtitleReports
+                              : t.overview.subtitleDefault}
               </p>
             </div>
             <div className="heading-actions">
               {loading ? (
-                <span className="muted">Refreshing…</span>
+                <span className="muted">{t.common.refreshing}</span>
               ) : (
                 <button
                   className="icon-button"
-                  aria-label="Refresh workspace"
+                  aria-label={t.common.refreshWorkspace}
                   onClick={load}
                 >
                   <RefreshCw size={17} />
@@ -536,7 +563,7 @@ export function WorkspaceApp() {
                   onClick={() => setDialog({ type: "employee" })}
                 >
                   <Plus size={17} />
-                  Add employee
+                  {t.employees.addEmployee}
                 </button>
               )}
               {hr && view === "competencies" && (
@@ -545,13 +572,13 @@ export function WorkspaceApp() {
                   onClick={() => setDialog({ type: "competency" })}
                 >
                   <Plus size={17} />
-                  New competency
+                  {t.competencies.newCompetency}
                 </button>
               )}
               {view === "employees" && !selectedEmployee && (
                 <button className="button" onClick={exportCsv}>
                   <Download size={16} />
-                  Export CSV
+                  {t.employees.exportCsv}
                 </button>
               )}
             </div>
@@ -562,32 +589,32 @@ export function WorkspaceApp() {
                 {[
                   [
                     Users,
-                    "Active employees",
+                    t.stats.activeEmployees,
                     active.length,
-                    "Across " +
-                      new Set(active.map((e) => e.site)).size +
-                      " sites",
+                    t.stats.acrossSites(
+                      new Set(active.map((e) => e.site)).size,
+                    ),
                     "teal",
                   ],
                   [
                     ShieldCheck,
-                    "Valid qualifications",
+                    t.stats.validQualifications,
                     valid,
-                    "Verified and within validity",
+                    t.stats.verifiedWithinValidity,
                     "blue",
                   ],
                   [
                     Clock3,
-                    "Expiring in 30 days",
+                    t.stats.expiring30,
                     expiring.length,
-                    "Plan the next renewal",
+                    t.stats.planNextRenewal,
                     "amber",
                   ],
                   [
                     AlertTriangle,
-                    "Expired qualifications",
+                    t.stats.expiredQualifications,
                     expired.length,
-                    "Review with your team",
+                    t.stats.reviewWithTeam,
                     "red",
                   ],
                 ].map(([Icon, label, value, hint, tone]) => {
@@ -611,23 +638,23 @@ export function WorkspaceApp() {
                   <div className="card-heading">
                     <div>
                       <h2>
-                        Needs attention{" "}
+                        {t.attention.needsAttention}{" "}
                         <span className="count">{attention.length}</span>
                       </h2>
-                      <p>Upcoming renewals and expired qualifications</p>
+                      <p>{t.attention.upcomingRenewals}</p>
                     </div>
                     <Link className="text-link" href="/workspace/matrix">
-                      View matrix <ArrowUpRight size={15} />
+                      {t.attention.viewMatrix} <ArrowUpRight size={15} />
                     </Link>
                   </div>
                   <div className="table-scroll">
                     <table>
                       <thead>
                         <tr>
-                          <th>Employee</th>
-                          <th>Qualification</th>
-                          <th>Expiry date</th>
-                          <th>Status</th>
+                          <th>{t.table.employee}</th>
+                          <th>{t.table.qualification}</th>
+                          <th>{t.attention.expiryDate}</th>
+                          <th>{t.table.status}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -654,7 +681,9 @@ export function WorkspaceApp() {
                                 {dateLabel(q.expiresOn)}
                               </td>
                               <td>
-                                <Badge>{q.status}</Badge>
+                                <Badge tone={statusTone(q.status)}>
+                                  {statusLabel(q.status, t)}
+                                </Badge>
                               </td>
                             </tr>
                           );
@@ -663,8 +692,8 @@ export function WorkspaceApp() {
                     </table>
                     {!attention.length && (
                       <Empty
-                        title="All caught up"
-                        description="No qualifications are expired or due within 30 days."
+                        title={t.attention.allCaughtUp}
+                        description={t.attention.allCaughtUpDesc}
                       />
                     )}
                   </div>
@@ -672,8 +701,8 @@ export function WorkspaceApp() {
                 <section className="card health-card">
                   <div className="card-heading">
                     <div>
-                      <h2>Qualification health</h2>
-                      <p>Active employee records</p>
+                      <h2>{t.health.title}</h2>
+                      <p>{t.health.subtitle}</p>
                     </div>
                     <ShieldCheck size={19} className="muted" />
                   </div>
@@ -688,37 +717,38 @@ export function WorkspaceApp() {
                         {coverage}
                         <span>%</span>
                       </strong>
-                      <small>verified & valid</small>
+                      <small>{t.health.verifiedAndValid}</small>
                     </div>
                   </div>
                   <div className="health-legend">
                     <span>
                       <i className="dot teal" />
-                      Valid qualifications<strong>{valid}</strong>
+                      {t.health.validQualifications}
+                      <strong>{valid}</strong>
                     </span>
                     <span>
                       <i className="dot amber" />
-                      Pending review<strong>{pending.length}</strong>
+                      {t.health.pendingReview}
+                      <strong>{pending.length}</strong>
                     </span>
                     <span>
                       <i className="dot red" />
-                      Expired<strong>{expired.length}</strong>
+                      {t.health.expired}
+                      <strong>{expired.length}</strong>
                     </span>
                   </div>
-                  <p className="health-footnote">
-                    Validity and verification are tracked separately.
-                  </p>
+                  <p className="health-footnote">{t.health.footnote}</p>
                 </section>
               </div>
               <div className="overview-grid">
                 <section className="card">
                   <div className="card-heading">
                     <div>
-                      <h2>Your people</h2>
-                      <p>Employee credentials, all in one place</p>
+                      <h2>{t.yourPeople.title}</h2>
+                      <p>{t.yourPeople.subtitle}</p>
                     </div>
                     <Link className="text-link" href="/workspace/employees">
-                      All employees <ArrowRight size={15} />
+                      {t.yourPeople.allEmployees} <ArrowRight size={15} />
                     </Link>
                   </div>
                   {employeeTable(data.employees.slice(0, 5), true)}
@@ -726,8 +756,8 @@ export function WorkspaceApp() {
                 <section className="card">
                   <div className="card-heading">
                     <div>
-                      <h2>Recent activity</h2>
-                      <p>Latest changes in this company</p>
+                      <h2>{t.activity.title}</h2>
+                      <p>{t.activity.subtitle}</p>
                     </div>
                     <Clock3 size={18} className="muted" />
                   </div>
@@ -748,8 +778,8 @@ export function WorkspaceApp() {
                     ))}
                     {!data.activity.length && (
                       <Empty
-                        title="No activity yet"
-                        description="Changes will appear here."
+                        title={t.activity.none}
+                        description={t.activity.noneDesc}
                       />
                     )}
                   </div>
@@ -760,14 +790,11 @@ export function WorkspaceApp() {
                   <QrCode size={30} />
                 </div>
                 <div>
-                  <h3>Credentials that travel with your team</h3>
-                  <p>
-                    Each employee has a live, public passport. Print their QR
-                    label for quick access on site.
-                  </p>
+                  <h3>{t.banner.title}</h3>
+                  <p>{t.banner.desc}</p>
                 </div>
                 <Link className="button" href="/workspace/passports">
-                  Open QR passports <ArrowRight size={16} />
+                  {t.banner.open} <ArrowRight size={16} />
                 </Link>
               </section>
             </>
@@ -778,8 +805,8 @@ export function WorkspaceApp() {
                 <div className="search-input">
                   <Search size={17} />
                   <input
-                    aria-label="Search employees"
-                    placeholder="Search name, ID, role or site…"
+                    aria-label={t.employees.searchLabel}
+                    placeholder={t.employees.searchPlaceholder}
                     value={search}
                     onChange={(e) => {
                       setSearch(e.target.value);
@@ -788,26 +815,29 @@ export function WorkspaceApp() {
                   />
                 </div>
                 <select
-                  aria-label="Employee status"
+                  aria-label={t.employees.statusLabel}
                   value={status}
                   onChange={(e) => {
                     setStatus(e.target.value);
                     setPage(1);
                   }}
                 >
-                  <option value="all">All statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="all">{t.employees.allStatuses}</option>
+                  <option value="active">{t.status.active}</option>
+                  <option value="inactive">{t.status.inactive}</option>
                 </select>
                 <span className="muted push-right">
-                  {filtered.length} employees
+                  {t.employees.count(filtered.length)}
                 </span>
               </div>
               {employeeTable(filtered.slice((page - 1) * 10, page * 10))}
               <div className="table-footer">
                 <span>
-                  Showing {filtered.length ? (page - 1) * 10 + 1 : 0}–
-                  {Math.min(page * 10, filtered.length)} of {filtered.length}
+                  {t.employees.showing(
+                    filtered.length ? (page - 1) * 10 + 1 : 0,
+                    Math.min(page * 10, filtered.length),
+                    filtered.length,
+                  )}
                 </span>
                 <div>
                   <button
@@ -815,15 +845,15 @@ export function WorkspaceApp() {
                     disabled={page === 1}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Previous
+                    {t.common.previous}
                   </button>
-                  <span>Page {page}</span>
+                  <span>{t.common.page(page)}</span>
                   <button
                     className="button small"
                     disabled={page * 10 >= filtered.length}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Next
+                    {t.common.next}
                   </button>
                 </div>
               </div>
@@ -841,8 +871,8 @@ export function WorkspaceApp() {
               />
             ) : (
               <Empty
-                title="Employee not found"
-                description="Return to Employees to choose someone in this company."
+                title={t.employees.notFound}
+                description={t.employees.notFoundDesc}
               />
             ))}
           {view === "matrix" && (
@@ -851,8 +881,8 @@ export function WorkspaceApp() {
                 <div className="search-input">
                   <Search size={17} />
                   <input
-                    aria-label="Search skills matrix"
-                    placeholder="Search employees…"
+                    aria-label={t.matrix.searchLabel}
+                    placeholder={t.matrix.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -860,24 +890,24 @@ export function WorkspaceApp() {
                 <div className="matrix-legend">
                   <span>
                     <i className="dot teal" />
-                    Valid
+                    {t.matrix.legendValid}
                   </span>
                   <span>
                     <i className="dot amber" />
-                    Expiring / pending
+                    {t.matrix.legendExpiringPending}
                   </span>
                   <span>
                     <i className="dot red" />
-                    Expired / revoked
+                    {t.matrix.legendExpiredRevoked}
                   </span>
-                  <span>— Not recorded</span>
+                  <span>{t.matrix.notRecorded}</span>
                 </div>
               </div>
               <div className="table-scroll">
                 <table className="matrix">
                   <thead>
                     <tr>
-                      <th>Employee</th>
+                      <th>{t.table.employee}</th>
                       {data.competencies.map((c) => (
                         <th key={c.id}>{c.name}</th>
                       ))}
@@ -925,7 +955,7 @@ export function WorkspaceApp() {
                               {q ? (
                                 <Link
                                   href={"/workspace/employees/" + e.id}
-                                  title={`${q.name}: ${q.status}, ${q.verification === "VERIFIED" ? "verified" : "pending review"}. ${dateLabel(q.expiresOn)}`}
+                                  title={`${q.name}: ${statusLabel(q.status, t)}, ${verificationLabel(q.verification, t)}. ${dateLabel(q.expiresOn)}`}
                                   className={
                                     "matrix-cell " +
                                     (["Expired", "Revoked"].includes(q.status)
@@ -944,13 +974,7 @@ export function WorkspaceApp() {
                                   ) : (
                                     <Clock3 size={14} />
                                   )}
-                                  <span>
-                                    {q.verification === "PENDING"
-                                      ? "Pending"
-                                      : q.status === "Expiring soon"
-                                        ? "Expiring"
-                                        : q.status}
-                                  </span>
+                                  <span>{matrixCellLabel(q, t)}</span>
                                 </Link>
                               ) : (
                                 <span className="muted">—</span>
@@ -963,10 +987,7 @@ export function WorkspaceApp() {
                   </tbody>
                 </table>
               </div>
-              <div className="table-footer">
-                Best current record shown per employee and competency. Open a
-                profile for full history.
-              </div>
+              <div className="table-footer">{t.matrix.footer}</div>
             </section>
           )}
           {view === "competencies" && (
@@ -975,14 +996,14 @@ export function WorkspaceApp() {
                 <div className="search-input">
                   <Search size={17} />
                   <input
-                    aria-label="Search competencies"
-                    placeholder="Search competencies…"
+                    aria-label={t.competencies.searchLabel}
+                    placeholder={t.competencies.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
                 <span className="muted">
-                  {data.competencies.length} competencies
+                  {t.competencies.count(data.competencies.length)}
                 </span>
               </div>
               <div className="competency-grid">
@@ -1003,13 +1024,13 @@ export function WorkspaceApp() {
                           <span className="category-label">{c.category}</span>
                         </div>
                         <h2>{c.name}</h2>
-                        <p>{c.description || "No description added."}</p>
+                        <p>{c.description || t.competencies.noDescription}</p>
                         <div className="competency-bottom">
                           <span>
                             <strong>
                               {new Set(records.map((q) => q.employeeId)).size}
                             </strong>{" "}
-                            employees
+                            {t.competencies.employeesCount}
                           </span>
                           <span className="muted">
                             {
@@ -1017,7 +1038,7 @@ export function WorkspaceApp() {
                                 (q) => q.status === "Expiring soon",
                               ).length
                             }{" "}
-                            expiring soon
+                            {t.competencies.expiringSoonCount}
                           </span>
                         </div>
                       </section>
@@ -1026,8 +1047,8 @@ export function WorkspaceApp() {
               </div>
               {!data.competencies.length && (
                 <Empty
-                  title="Build your competency catalogue"
-                  description="Add a competency to start recording employee qualifications."
+                  title={t.competencies.buildCatalogue}
+                  description={t.competencies.buildCatalogueDesc}
                 />
               )}
             </>
@@ -1038,24 +1059,24 @@ export function WorkspaceApp() {
                 <div className="search-input">
                   <Search size={17} />
                   <input
-                    aria-label="Search documents"
-                    placeholder="Search documents or employees…"
+                    aria-label={t.documents.searchLabel}
+                    placeholder={t.documents.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
                 <span className="muted push-right">
-                  Upload diplomas from an employee profile
+                  {t.documents.uploadFromProfile}
                 </span>
               </div>
               <div className="table-scroll">
                 <table>
                   <thead>
                     <tr>
-                      <th>Document</th>
-                      <th>Employee</th>
-                      <th>Type</th>
-                      <th>Added</th>
+                      <th>{t.documents.document}</th>
+                      <th>{t.table.employee}</th>
+                      <th>{t.documents.type}</th>
+                      <th>{t.documents.added}</th>
                       <th />
                     </tr>
                   </thead>
@@ -1093,7 +1114,7 @@ export function WorkspaceApp() {
                               }
                             </Link>
                           </td>
-                          <td>Diploma / certificate</td>
+                          <td>{t.documents.diplomaCertificate}</td>
                           <td>{dateLabel(d.createdAt)}</td>
                           <td>
                             <a
@@ -1102,7 +1123,7 @@ export function WorkspaceApp() {
                               target="_blank"
                               rel="noreferrer"
                             >
-                              Open <ExternalLink size={14} />
+                              {t.documents.open} <ExternalLink size={14} />
                             </a>
                           </td>
                         </tr>
@@ -1112,8 +1133,8 @@ export function WorkspaceApp() {
               </div>
               {!data.documents.some((d) => d.kind === "DIPLOMA") && (
                 <Empty
-                  title="No diplomas uploaded yet"
-                  description="HR can open an employee profile and attach a diploma to a qualification."
+                  title={t.documents.noDiplomas}
+                  description={t.documents.noDiplomasDesc}
                 />
               )}
             </section>
@@ -1123,19 +1144,16 @@ export function WorkspaceApp() {
               <div className="info-banner">
                 <ShieldCheck size={20} />
                 <div>
-                  <strong>Open access, always up to date</strong>
-                  <p>
-                    Anyone with the QR code can view the employee’s skills and
-                    diplomas. No employee account needed.
-                  </p>
+                  <strong>{t.passports.openAccess}</strong>
+                  <p>{t.passports.openAccessDesc}</p>
                 </div>
               </div>
               <div className="toolbar standalone">
                 <div className="search-input">
                   <Search size={17} />
                   <input
-                    aria-label="Search passports"
-                    placeholder="Find an employee passport…"
+                    aria-label={t.passports.searchLabel}
+                    placeholder={t.passports.searchPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -1158,7 +1176,7 @@ export function WorkspaceApp() {
                           rel="noreferrer"
                         >
                           <ExternalLink size={15} />
-                          View passport
+                          {t.passports.viewPassport}
                         </a>
                         <a
                           className="button primary"
@@ -1167,7 +1185,7 @@ export function WorkspaceApp() {
                           rel="noreferrer"
                         >
                           <Printer size={15} />
-                          Print label
+                          {t.passports.printLabel}
                         </a>
                       </div>
                     </section>
@@ -1193,15 +1211,15 @@ export function WorkspaceApp() {
             "reports",
           ].includes(view) && (
             <Empty
-              title="Page not found"
-              description="Choose a page from the navigation."
+              title={t.errors.pageNotFound}
+              description={t.errors.pageNotFoundDesc}
             />
           )}
           <footer className="workspace-footer">
             <span>
-              skills. <span className="muted">Workforce credentials</span>
+              skills. <span className="muted">{t.footer.brand}</span>
             </span>
-            <span>{data.company.name} · HR workspace</span>
+            <span>{t.footer.hrWorkspace(data.company.name)}</span>
           </footer>
         </main>
       </div>
@@ -1236,6 +1254,7 @@ function EmployeeDetail({
   setDialog: (d: DialogState) => void;
   action: (path: string, method: string, body?: unknown) => Promise<unknown>;
 }) {
+  const { t } = useLocale();
   const qs = data.qualifications.filter((q) => q.employeeId === e.id);
   return (
     <>
@@ -1250,7 +1269,7 @@ function EmployeeDetail({
             {e.site} · {e.ssn}
           </span>
         </div>
-        <Badge>{e.active ? "Active" : "Inactive"}</Badge>
+        <Badge tone={activeTone(e.active)}>{activeLabel(e.active, t)}</Badge>
         <div className="summary-actions">
           {hr && (
             <button
@@ -1258,7 +1277,7 @@ function EmployeeDetail({
               onClick={() => setDialog({ type: "employee", employee: e })}
             >
               <Pencil size={15} />
-              Edit profile
+              {t.detail.editProfile}
             </button>
           )}
           <a
@@ -1268,7 +1287,7 @@ function EmployeeDetail({
             rel="noreferrer"
           >
             <QrCode size={16} />
-            Public passport <ArrowUpRight size={15} />
+            {t.detail.publicPassport} <ArrowUpRight size={15} />
           </a>
         </div>
       </section>
@@ -1277,9 +1296,10 @@ function EmployeeDetail({
           <div className="card-heading">
             <div>
               <h2>
-                Qualifications <span className="count">{qs.length}</span>
+                {t.detail.qualifications}{" "}
+                <span className="count">{qs.length}</span>
               </h2>
-              <p>Validity, verification and supporting documents</p>
+              <p>{t.detail.qualificationsDesc}</p>
             </div>
             {hr && (
               <button
@@ -1289,7 +1309,7 @@ function EmployeeDetail({
                 }
               >
                 <Plus size={15} />
-                Add qualification
+                {t.detail.addQualification}
               </button>
             )}
           </div>
@@ -1304,21 +1324,23 @@ function EmployeeDetail({
                     <h3>{q.name}</h3>
                     <small className="muted">{q.issuer}</small>
                   </div>
-                  <Badge>{q.status}</Badge>
+                  <Badge tone={statusTone(q.status)}>
+                    {statusLabel(q.status, t)}
+                  </Badge>
                 </div>
                 <div className="qualification-meta">
                   <span>
-                    Valid from<strong>{dateLabel(q.validFrom)}</strong>
+                    {t.detail.validFrom}
+                    <strong>{dateLabel(q.validFrom)}</strong>
                   </span>
                   <span>
-                    Valid until<strong>{dateLabel(q.expiresOn)}</strong>
+                    {t.detail.validUntil}
+                    <strong>{dateLabel(q.expiresOn)}</strong>
                   </span>
                   <span>
-                    Verification
-                    <Badge>
-                      {q.verification === "VERIFIED"
-                        ? "Verified"
-                        : "Pending review"}
+                    {t.detail.verification}
+                    <Badge tone={verificationTone(q.verification)}>
+                      {verificationLabel(q.verification, t)}
                     </Badge>
                   </span>
                 </div>
@@ -1351,7 +1373,7 @@ function EmployeeDetail({
                       }
                     >
                       <Upload size={14} />
-                      Upload diploma
+                      {t.detail.uploadDiploma}
                     </button>
                     {q.verification === "PENDING" && (
                       <button
@@ -1359,18 +1381,15 @@ function EmployeeDetail({
                         onClick={() =>
                           setDialog({
                             type: "confirm",
-                            title: "Verify qualification?",
-                            description:
-                              "Confirm that HR has checked the supporting evidence for " +
-                              q.name +
-                              ".",
+                            title: t.detail.verifyTitle,
+                            description: t.detail.verifyDesc(q.name),
                             path: "qualifications/" + q.id,
                             body: { verification: "VERIFIED" },
                           })
                         }
                       >
                         <Check size={14} />
-                        Mark verified
+                        {t.detail.markVerified}
                       </button>
                     )}
                     {!q.revoked && (
@@ -1379,17 +1398,15 @@ function EmployeeDetail({
                         onClick={() =>
                           setDialog({
                             type: "confirm",
-                            title: "Revoke qualification?",
-                            description:
-                              q.name +
-                              " will be marked revoked on the public passport. Its history and evidence will remain.",
+                            title: t.detail.revokeTitle,
+                            description: t.detail.revokeDesc(q.name),
                             path: "qualifications/" + q.id,
                             body: { revoked: true },
                           })
                         }
                       >
                         <Ban size={14} />
-                        Revoke
+                        {t.detail.revoke}
                       </button>
                     )}
                   </div>
@@ -1399,22 +1416,20 @@ function EmployeeDetail({
           </div>
           {!qs.length && (
             <Empty
-              title="No qualifications recorded"
-              description="Add a competency and its validity dates to start this passport."
+              title={t.detail.noQualifications}
+              description={t.detail.noQualificationsDesc}
             />
           )}
         </section>
         <aside className="detail-aside">
           <section className="card">
             <div className="card-heading">
-              <h2>Employee photograph</h2>
+              <h2>{t.detail.employeePhotograph}</h2>
             </div>
             <div className="photo-panel">
               <Avatar name={e.name} photoId={e.photoId} large />
               <p>
-                {e.photoId
-                  ? "Shown on the passport and helmet label."
-                  : "Add a photo so people can identify this worker."}
+                {e.photoId ? t.detail.shownOnPassport : t.detail.addPhotoHint}
               </p>
               {hr && (
                 <button
@@ -1422,21 +1437,18 @@ function EmployeeDetail({
                   onClick={() => setDialog({ type: "upload", employee: e })}
                 >
                   <Upload size={16} />
-                  {e.photoId ? "Replace photo" : "Upload photo"}
+                  {e.photoId ? t.detail.replacePhoto : t.detail.uploadPhoto}
                 </button>
               )}
             </div>
           </section>
           <section className="card">
             <div className="card-heading">
-              <h2>Helmet label</h2>
+              <h2>{t.detail.helmetLabel}</h2>
               <QrCode size={18} />
             </div>
             <div className="label-panel">
-              <p>
-                Print a label with the employee’s name, photograph and unique QR
-                code.
-              </p>
+              <p>{t.detail.printLabelHint}</p>
               <a
                 className="button primary full"
                 href={"/label/" + e.id}
@@ -1444,7 +1456,7 @@ function EmployeeDetail({
                 rel="noreferrer"
               >
                 <Printer size={16} />
-                Open print layout
+                {t.detail.openPrintLayout}
               </a>
               {hr && (
                 <button
@@ -1452,26 +1464,22 @@ function EmployeeDetail({
                   onClick={() =>
                     setDialog({
                       type: "confirm",
-                      title: "Replace this QR code?",
-                      description:
-                        "The old QR code will stop working immediately. You will need to print a new helmet label.",
+                      title: t.detail.replaceQrTitle,
+                      description: t.detail.replaceQrDesc,
                       path: "employees/" + e.id + "/rotate-qr",
                       body: {},
                     })
                   }
                 >
                   <RefreshCw size={14} />
-                  Replace QR code
+                  {t.detail.replaceQr}
                 </button>
               )}
             </div>
           </section>
           <div className="info-banner compact">
             <ShieldCheck size={20} />
-            <p>
-              SSN and internal contact details are not shown on the public
-              passport.
-            </p>
+            <p>{t.detail.ssnHidden}</p>
           </div>
         </aside>
       </div>
@@ -1490,21 +1498,22 @@ function FormDialog({
   close: () => void;
   save: (path: string, method: string, body?: unknown) => Promise<unknown>;
 }) {
+  const { t } = useLocale();
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const title =
     d.type === "employee"
       ? d.employee
-        ? "Edit employee"
-        : "Add employee"
+        ? t.dialogs.editEmployee
+        : t.dialogs.addEmployee
       : d.type === "qualification"
-        ? "Add qualification"
+        ? t.dialogs.addQualification
         : d.type === "competency"
-          ? "New competency"
+          ? t.dialogs.newCompetency
           : d.type === "upload"
             ? d.qualification
-              ? "Upload diploma"
-              : "Upload employee photo"
+              ? t.dialogs.uploadDiploma
+              : t.dialogs.uploadPhoto
             : d.title;
   const e = d.type === "employee" ? d.employee : undefined;
   return (
@@ -1568,57 +1577,58 @@ function FormDialog({
           {d.type === "employee" && (
             <div className="form-grid">
               <label className="span-two">
-                Full name
+                {t.dialogs.fullName}
                 <input
                   name="name"
                   defaultValue={e?.name}
                   maxLength={120}
                   required
-                  placeholder="e.g. Thomas Bernard"
+                  placeholder={t.dialogs.fullNamePlaceholder}
                 />
               </label>
               <label>
-                Employee ID / SSN
+                {t.dialogs.employeeIdSsn}
                 <input
                   name="ssn"
                   defaultValue={e?.ssn}
                   maxLength={100}
                   required
-                  placeholder="Unique within the company"
+                  placeholder={t.dialogs.employeeIdSsnPlaceholder}
                 />
               </label>
               <label>
-                Job title
+                {t.dialogs.jobTitle}
                 <input
                   name="jobTitle"
                   defaultValue={e?.jobTitle}
                   maxLength={120}
                   required
-                  placeholder="e.g. Site supervisor"
+                  placeholder={t.dialogs.jobTitlePlaceholder}
                 />
               </label>
               <label>
-                Department
+                {t.dialogs.department}
                 <input
                   name="department"
                   defaultValue={e?.department}
                   maxLength={100}
                   required
-                  placeholder="e.g. Operations"
+                  placeholder={t.dialogs.departmentPlaceholder}
                 />
               </label>
               <label>
-                Site
+                {t.dialogs.site}
                 <input
                   name="site"
                   defaultValue={e?.site}
                   maxLength={120}
                   required
-                  placeholder="e.g. Riverside project"
+                  placeholder={t.dialogs.sitePlaceholder}
                 />
               </label>
               <label className="span-two">
-                Email <span className="muted">(optional, internal only)</span>
+                {t.dialogs.email}{" "}
+                <span className="muted">{t.dialogs.optionalInternalOnly}</span>
                 <input
                   name="email"
                   type="email"
@@ -1632,43 +1642,42 @@ function FormDialog({
                   type="checkbox"
                   defaultChecked={e ? !!e.active : true}
                 />
-                Active employee — public passport enabled
+                {t.dialogs.activeEmployeeCheckbox}
               </label>
               <p className="form-hint span-two">
-                Employees do not receive an account. HR maintains their
-                information.
+                {t.dialogs.employeesNoAccount}
               </p>
             </div>
           )}
           {d.type === "competency" && (
             <div className="form-grid">
               <label className="span-two">
-                Competency name
+                {t.dialogs.competencyName}
                 <input
                   name="name"
                   maxLength={120}
                   required
-                  placeholder="e.g. Working at height"
+                  placeholder={t.dialogs.competencyNamePlaceholder}
                 />
               </label>
               <label className="span-two">
-                Category
+                {t.dialogs.category}
                 <input
                   name="category"
                   maxLength={80}
                   required
-                  placeholder="e.g. Safety"
+                  placeholder={t.dialogs.categoryPlaceholder}
                   list="categories"
                 />
                 <datalist id="categories">
-                  <option>Safety</option>
-                  <option>Technical</option>
-                  <option>Equipment</option>
-                  <option>Onboarding</option>
+                  <option>{t.competencies.categorySafety}</option>
+                  <option>{t.competencies.categoryTechnical}</option>
+                  <option>{t.competencies.categoryEquipment}</option>
+                  <option>{t.competencies.categoryOnboarding}</option>
                 </datalist>
               </label>
               <label className="span-two">
-                Description
+                {t.dialogs.description}
                 <textarea name="description" maxLength={2000} rows={3} />
               </label>
             </div>
@@ -1676,19 +1685,19 @@ function FormDialog({
           {d.type === "qualification" && (
             <div className="form-grid">
               <p className="form-hint span-two">
-                Recording a qualification for <strong>{d.employee.name}</strong>
-                . Renewals are added as new records to preserve history.
+                {t.dialogs.recordingForPre} <strong>{d.employee.name}</strong>
+                {t.dialogs.recordingForPost}
               </p>
               <label className="span-two">
-                Competency
+                {t.dialogs.competency}
                 <select
                   name="competencyId"
-                  aria-label="Competency"
+                  aria-label={t.dialogs.competency}
                   required
                   defaultValue=""
                 >
                   <option value="" disabled>
-                    Select competency
+                    {t.dialogs.selectCompetency}
                   </option>
                   {data.competencies.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -1698,32 +1707,36 @@ function FormDialog({
                 </select>
               </label>
               <label className="span-two">
-                Issuing organization
+                {t.dialogs.issuingOrg}
                 <input
                   name="issuer"
                   maxLength={160}
                   required
-                  placeholder="Training provider or issuing body"
+                  placeholder={t.dialogs.issuingOrgPlaceholder}
                 />
               </label>
               <label>
-                Valid from
+                {t.detail.validFrom}
                 <input name="validFrom" type="date" required />
               </label>
               <label>
-                Valid until <span className="muted">(optional)</span>
+                {t.detail.validUntil}{" "}
+                <span className="muted">{t.dialogs.optional}</span>
                 <input name="expiresOn" type="date" />
               </label>
               <label className="span-two">
-                Verification
+                {t.detail.verification}
                 <select name="verification" defaultValue="PENDING">
-                  <option value="PENDING">Pending review</option>
-                  <option value="VERIFIED">Verified by HR</option>
+                  <option value="PENDING">
+                    {t.dialogs.verificationPending}
+                  </option>
+                  <option value="VERIFIED">
+                    {t.dialogs.verificationVerified}
+                  </option>
                 </select>
               </label>
               <p className="form-hint span-two">
-                Leave the end date empty for a qualification without expiry.
-                Attach the diploma after saving.
+                {t.dialogs.leaveEndDateEmpty}
               </p>
             </div>
           )}
@@ -1735,11 +1748,13 @@ function FormDialog({
                   {d.qualification ? d.qualification.name : d.employee.name}
                 </strong>
                 <p>
-                  {d.qualification ? "PDF, PNG or JPEG" : "PNG or JPEG"} · Up to
-                  10 MB
+                  {d.qualification
+                    ? t.dialogs.acceptPdfPngJpeg
+                    : t.dialogs.acceptPngJpeg}{" "}
+                  · {t.dialogs.upTo10mb}
                 </p>
                 <input
-                  aria-label="Choose file"
+                  aria-label={t.dialogs.chooseFile}
                   type="file"
                   name="file"
                   accept={
@@ -1748,10 +1763,7 @@ function FormDialog({
                   required
                 />
               </div>
-              <p className="form-hint">
-                This file will be visible to anyone opening the employee’s QR
-                passport. Uploading a diploma does not verify the qualification.
-              </p>
+              <p className="form-hint">{t.dialogs.willBeVisible}</p>
             </>
           )}
           {d.type === "confirm" && <p>{d.description}</p>}
@@ -1768,16 +1780,16 @@ function FormDialog({
             onClick={close}
             disabled={busy}
           >
-            Cancel
+            {t.common.cancel}
           </button>
           <button className="button primary" disabled={busy}>
             {busy
-              ? "Saving…"
+              ? t.common.saving
               : d.type === "upload"
-                ? "Upload file"
+                ? t.dialogs.uploadFile
                 : d.type === "confirm"
-                  ? "Confirm"
-                  : "Save changes"}
+                  ? t.common.confirm
+                  : t.common.save}
           </button>
         </div>
       </form>
@@ -1796,17 +1808,24 @@ function Reports({
   setNewToken: (t: string) => void;
   action: (path: string, method: string, body?: unknown) => Promise<any>;
 }) {
-  const [keyName, setKeyName] = useState("Excel reporting"),
+  const { t } = useLocale();
+  const [keyName, setKeyName] = useState(t.reports.defaultKeyName),
     [copied, setCopied] = useState(false),
     [busy, setBusy] = useState(false);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const datasetLabel = (name: string) =>
+    name === "employees"
+      ? t.reports.datasetEmployees
+      : name === "qualifications"
+        ? t.reports.datasetQualifications
+        : t.reports.datasetCompetencies;
   return (
     <div className="reports-grid">
       <section className="card">
         <div className="card-heading">
           <div>
-            <h2>Connect your workbook</h2>
-            <p>Use Excel Power Query to refresh company data</p>
+            <h2>{t.reports.connectWorkbook}</h2>
+            <p>{t.reports.useExcel}</p>
           </div>
           <span className="feature-icon">
             <Cable size={24} />
@@ -1816,32 +1835,31 @@ function Reports({
           <div>
             <span>1</span>
             <section>
-              <h3>Create a reporting key</h3>
+              <h3>{t.reports.step1Title}</h3>
               <p>
-                Your key gives read-only access to{" "}
-                <strong>{data.company.name}</strong>. It expires after 90 days.
+                {t.reports.step1DescPre} <strong>{data.company.name}</strong>
+                {t.reports.step1DescPost}
               </p>
             </section>
           </div>
           <div>
             <span>2</span>
             <section>
-              <h3>Open Excel → Data → From Web</h3>
+              <h3>{t.reports.step2Title}</h3>
               <p>
-                Choose a dataset below. In the credentials dialog choose{" "}
-                <strong>Basic</strong>, use <code>token</code> as the username
-                and your reporting key as the password.
+                {t.reports.step2DescPre} <strong>Basic</strong>
+                {t.reports.step2DescMid} <code>token</code>{" "}
+                {t.reports.step2DescPost}
               </p>
             </section>
           </div>
           <div>
             <span>3</span>
             <section>
-              <h3>Expand the data and build your report</h3>
+              <h3>{t.reports.step3Title}</h3>
               <p>
-                Choose the <code>data</code> list, convert it to a table, then
-                expand the columns you need. Refresh the query to fetch current
-                records.
+                {t.reports.step3DescPre} <code>data</code>{" "}
+                {t.reports.step3DescMid}
               </p>
             </section>
           </div>
@@ -1849,13 +1867,13 @@ function Reports({
         <div className="dataset-list">
           {["employees", "qualifications", "competencies"].map((name) => (
             <div key={name}>
-              <strong>{name[0].toUpperCase() + name.slice(1)}</strong>
+              <strong>{datasetLabel(name)}</strong>
               <code>
                 {origin}/api/reports/{name}?pageSize=1000
               </code>
               <button
                 className="icon-button"
-                aria-label={"Copy " + name + " URL"}
+                aria-label={t.reports.copyUrl(datasetLabel(name))}
                 onClick={() =>
                   navigator.clipboard.writeText(
                     origin + "/api/reports/" + name + "?pageSize=1000",
@@ -1868,14 +1886,11 @@ function Reports({
           ))}
         </div>
         <div className="connection-note">
-          <strong>Working with more than 1,000 records?</strong>
-          <p>
-            The API is paginated. Use the supplied Power Query template to load
-            every page.
-          </p>
+          <strong>{t.reports.moreThan1000}</strong>
+          <p>{t.reports.moreThan1000Desc}</p>
           <a className="text-link" href="/excel/Skills.pq" download>
             <Download size={15} />
-            Download Power Query template
+            {t.reports.downloadTemplate}
           </a>
         </div>
       </section>
@@ -1883,14 +1898,14 @@ function Reports({
         <section className="card">
           <div className="card-heading">
             <div>
-              <h2>Reporting keys</h2>
-              <p>Private to your account</p>
+              <h2>{t.reports.reportingKeys}</h2>
+              <p>{t.reports.privateToAccount}</p>
             </div>
             <KeyRound size={20} />
           </div>
           <div className="key-panel">
             <label>
-              Key name
+              {t.reports.keyName}
               <input
                 value={keyName}
                 maxLength={100}
@@ -1911,12 +1926,12 @@ function Reports({
               }}
             >
               <Plus size={16} />
-              {busy ? "Creating…" : "Create reporting key"}
+              {busy ? t.reports.creating : t.reports.createReportingKey}
             </button>
             {newToken && (
               <div className="new-key">
-                <strong>Copy your key now</strong>
-                <p>It will only be shown once. Keep it private.</p>
+                <strong>{t.reports.copyYourKey}</strong>
+                <p>{t.reports.shownOnce}</p>
                 <code>{newToken}</code>
                 <button
                   className="button full"
@@ -1926,27 +1941,23 @@ function Reports({
                   }}
                 >
                   <Copy size={15} />
-                  {copied ? "Copied" : "Copy key"}
+                  {copied ? t.reports.copied : t.reports.copyKey}
                 </button>
               </div>
             )}
-            {data.tokens.map((t) => (
-              <div className="token-row" key={t.id}>
+            {data.tokens.map((tk) => (
+              <div className="token-row" key={tk.id}>
                 <KeyRound size={17} />
                 <div>
-                  <strong>{t.name}</strong>
-                  <small>Expires {dateLabel(t.expiresAt)}</small>
+                  <strong>{tk.name}</strong>
+                  <small>{t.reports.expires(dateLabel(tk.expiresAt))}</small>
                 </div>
                 <button
                   className="icon-button danger-text"
-                  aria-label={"Revoke " + t.name}
+                  aria-label={t.reports.revokeKey(tk.name)}
                   onClick={async () => {
-                    if (
-                      window.confirm(
-                        "Revoke this reporting key? Connected workbooks using it will stop refreshing.",
-                      )
-                    ) {
-                      await action("tokens/" + t.id, "DELETE");
+                    if (window.confirm(t.reports.revokeKeyConfirm)) {
+                      await action("tokens/" + tk.id, "DELETE");
                       setNewToken("");
                     }
                   }}
@@ -1959,10 +1970,7 @@ function Reports({
         </section>
         <div className="info-banner compact">
           <ShieldCheck size={20} />
-          <p>
-            Reporting keys cannot change records or upload files. They only
-            access data from this company.
-          </p>
+          <p>{t.reports.reportingKeysNote}</p>
         </div>
       </div>
     </div>

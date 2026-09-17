@@ -1,19 +1,27 @@
 import type { Metadata } from "next";
 import "./globals.css";
-export const metadata: Metadata = {
-  title: "Skills · Workforce credentials",
-  description:
-    "Manage employee competencies, qualifications and digital skills passports.",
-  robots: { index: false, follow: false },
-};
-export default function RootLayout({
+import { getServerLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
+import { LocaleProvider } from "@/components/locale-provider";
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getDictionary(await getServerLocale());
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    robots: { index: false, follow: false },
+  };
+}
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getServerLocale();
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+    <html lang={locale} suppressHydrationWarning>
+      <body>
+        <LocaleProvider initialLocale={locale}>{children}</LocaleProvider>
+      </body>
     </html>
   );
 }

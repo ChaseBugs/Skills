@@ -11,8 +11,8 @@ This file applies to the entire repository. A working MVP now exists. Windows Se
 One Next.js 16 (App Router) application with TypeScript, serving both the UI and the API. No separate backend service.
 
 - `app/` — routes. `page.tsx` (root), `login/page.tsx` (HR sign-in), `workspace/[[...view]]/page.tsx` (HR management SPA-style views), `p/[token]/page.tsx` (public QR profile), `label/[id]/page.tsx` (printable helmet label), `api/[...path]/route.ts` (single catch-all REST handler), `error.tsx`/`not-found.tsx`/`layout.tsx`/`globals.css`.
-- `components/` — `workspace.tsx` (HR dashboard UI), `login.tsx`, `print-button.tsx`, `ui.tsx` (shared UI primitives).
-- `lib/` — `domain.ts` (business rules: qualification validity, status derivation — keep logic here, not in pages), `data.ts` (data access), `db.ts` (MySQL pool/connection), `auth.ts` (sessions, password hashing, API keys), `api.ts` (shared API helpers/types).
+- `components/` — `workspace.tsx` (HR dashboard UI), `login.tsx`, `print-button.tsx`, `ui.tsx` (shared UI primitives), `locale-provider.tsx` (client i18n context, mirrors the theme localStorage/cookie pattern), `lang-switch.tsx` (the EN/FR control).
+- `lib/` — `domain.ts` (business rules: qualification validity, status derivation — keep logic here, not in pages), `data.ts` (data access), `db.ts` (MySQL pool/connection), `auth.ts` (sessions, password hashing, API keys), `api.ts` (shared API helpers/types), `i18n.ts` (EN/FR dictionary and status/verification label helpers — add new UI copy here, not as inline JSX strings), `locale.ts` (server-side locale resolution from the `skills-lang` cookie, with `Accept-Language` fallback).
 - `migrations/` — sequential SQL migrations (`001_initial.sql`, `002_hr_only.sql`), run via `npm run db:migrate`.
 - `scripts/` — operator/dev tooling: `migrate.ts`, `seed.ts` (synthetic demo data), `provision.ts` (create HR account, no seeding), `local-bootstrap.ts`, `start-local.ps1`, `start-production.ps1`.
 - `tests/` — `domain.test.ts` (unit tests via `tsx --test`), `integration.ts` (hits a running server + seeded DB), `browser.ts` (Playwright/Chrome browser checks).
@@ -84,6 +84,7 @@ Keep automated workforce scheduling, course delivery, payroll, attendance, subsc
 - Expiry status: computed live using inclusive UTC calendar dates; 30-day dashboard alerts. Email reminders and imports are deferred.
 - QR output: qrcode-generated images and printable browser layouts (Print to PDF is supported).
 - Hosting: Windows Server, explicitly selected by the user; Node.js behind IIS, with MySQL and persistent file storage. See docs/windows-server.md.
+- Localization: English/French interface copy via a dictionary in `lib/i18n.ts`, selected through an EN/FR control (workspace topbar, login, public passport) and persisted in a `skills-lang` cookie plus localStorage. Server-rendered pages (public passport, printed label) read the cookie server-side, so they render in the chosen language without a client round-trip. User-entered data (names, competency text, activity log) is not translated. This was a user (developer) request, not a client-confirmed requirement.
 
 These are the current MVP implementation choices. Preserve the user-selected MySQL and Windows Server requirements. Avoid microservices and unnecessary infrastructure.
 

@@ -522,6 +522,36 @@ code {
   background: var(--border);
   margin: 0 2px;
 }
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.lang-switch button {
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.lang-switch button:hover {
+  color: var(--text);
+}
+.lang-switch button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.lang-switch.compact button {
+  padding: 4px 7px;
+}
 .notification {
   position: relative;
 }
@@ -1545,10 +1575,16 @@ tbody tr:hover {
   font-size: 10px;
 }
 .login-form-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 50px 25px;
+}
+.login-lang {
+  position: absolute;
+  top: 22px;
+  right: 22px;
 }
 .login-form {
   width: 345px;

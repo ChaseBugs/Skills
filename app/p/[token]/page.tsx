@@ -10,6 +10,15 @@ import { rows } from "@/lib/db";
 import { employeeColumns, qualifications, documents } from "@/lib/data";
 import { dateLabel, type Employee } from "@/lib/domain";
 import { Avatar, Badge, Empty } from "@/components/ui";
+import { LangSwitch } from "@/components/lang-switch";
+import { getServerLocale } from "@/lib/locale";
+import {
+  getDictionary,
+  statusLabel,
+  statusTone,
+  verificationLabel,
+  verificationTone,
+} from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 export default async function Passport({
   params,
@@ -17,6 +26,8 @@ export default async function Passport({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const locale = await getServerLocale();
+  const t = getDictionary(locale);
   const e = (
     await rows<Employee>(
       `SELECT ${employeeColumns} FROM employees WHERE qr_token=? AND active=TRUE`,
@@ -47,7 +58,8 @@ export default async function Passport({
               skills<span className="brand-dot">.</span>
             </strong>
           </div>
-          <span>DIGITAL SKILLS PASSPORT</span>
+          <span>{t.publicProfile.tag}</span>
+          <LangSwitch compact />
         </header>
         <section className="card public-identity">
           <Avatar name={e.name} photoId={e.photoId} publicToken={token} large />
@@ -57,7 +69,7 @@ export default async function Passport({
             <Building2 size={14} />
             {company.name}
           </div>
-          <Badge>Active</Badge>
+          <Badge tone="success">{t.status.active}</Badge>
           <div className="public-stats">
             <div>
               <strong>
@@ -69,23 +81,23 @@ export default async function Passport({
                   ).length
                 }
               </strong>
-              <span>Verified & valid</span>
+              <span>{t.publicProfile.verifiedAndValid}</span>
             </div>
             <div>
               <strong>
                 {qs.filter((q) => q.status === "Expiring soon").length}
               </strong>
-              <span>Expiring soon</span>
+              <span>{t.publicProfile.expiringSoon}</span>
             </div>
             <div>
               <strong>{ds.filter((d) => d.kind === "DIPLOMA").length}</strong>
-              <span>Supporting documents</span>
+              <span>{t.publicProfile.supportingDocuments}</span>
             </div>
           </div>
         </section>
         <div className="public-section-title">
-          <h2>Competencies & qualifications</h2>
-          <span>{qs.length} records</span>
+          <h2>{t.publicProfile.sectionTitle}</h2>
+          <span>{t.publicProfile.records(qs.length)}</span>
         </div>
         {qs.map((q) => (
           <article className="card public-qualification" key={q.id}>
@@ -97,21 +109,23 @@ export default async function Passport({
                 <h3>{q.name}</h3>
                 <small className="muted">{q.issuer}</small>
               </div>
-              <Badge>{q.status}</Badge>
+              <Badge tone={statusTone(q.status)}>
+                {statusLabel(q.status, t)}
+              </Badge>
             </div>
             <div className="qualification-meta">
               <span>
-                Valid from<strong>{dateLabel(q.validFrom)}</strong>
+                {t.publicProfile.validFrom}
+                <strong>{dateLabel(q.validFrom)}</strong>
               </span>
               <span>
-                Valid until<strong>{dateLabel(q.expiresOn)}</strong>
+                {t.publicProfile.validUntil}
+                <strong>{dateLabel(q.expiresOn)}</strong>
               </span>
               <span>
-                Verification
-                <Badge>
-                  {q.verification === "VERIFIED"
-                    ? "Verified"
-                    : "Pending review"}
+                {t.publicProfile.verification}
+                <Badge tone={verificationTone(q.verification)}>
+                  {verificationLabel(q.verification, t)}
                 </Badge>
               </span>
             </div>
@@ -131,7 +145,7 @@ export default async function Passport({
                   </a>
                 ))}
               {!ds.some((d) => d.qualificationId === q.id) && (
-                <small className="muted">No supporting document uploaded</small>
+                <small className="muted">{t.publicProfile.noDocument}</small>
               )}
             </div>
           </article>
@@ -139,17 +153,18 @@ export default async function Passport({
         {!qs.length && (
           <section className="card">
             <Empty
-              title="No qualifications recorded yet"
-              description="Contact the employer’s HR team for more information."
+              title={t.publicProfile.noneYet}
+              description={t.publicProfile.noneYetDesc}
             />
           </section>
         )}
         <p className="public-note">
-          Records maintained by {company.name}. Status checked{" "}
-          {dateLabel(new Date().toISOString())} (UTC).
+          {t.publicProfile.maintainedBy(
+            company.name,
+            dateLabel(new Date().toISOString()),
+          )}
           <br />
-          Verification reflects the employer’s review of evidence. Site or task
-          authorization may require additional checks.
+          {t.publicProfile.verificationNote}
         </p>
       </div>
     </main>

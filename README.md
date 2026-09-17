@@ -12,9 +12,10 @@ A working multi-company skills management application using **Next.js, TypeScrip
 - Searchable employee directory, skills matrix, document library and activity log.
 - QR passport links, QR replacement, and printable name/photo/QR helmet labels.
 - Company-scoped read-only API keys and a paginated Excel Power Query template.
+- English/French interface, switchable from an EN/FR control in the workspace topbar, the login page, and the public passport page. The choice is stored in a cookie (so server-rendered pages like the public passport and printed label pick it up too) and in localStorage.
 - MySQL migrations, synthetic seed data, operator account provisioning, and Windows/IIS deployment instructions.
 
-The MVP is one Node.js application containing both frontend and API. There is no separate NestJS service. No data is stored only in browser memory; localStorage holds theme/company preferences only.
+The MVP is one Node.js application containing both frontend and API. There is no separate NestJS service. No data is stored only in browser memory; localStorage holds theme/company/language preferences only.
 
 ## Current local preview
 
@@ -88,6 +89,7 @@ Integration tests use the demo credentials from `.env.local`, create uniquely na
 - No offline mode, email/SMS reminders, spreadsheet import, automated scheduling, employee login, self-service password reset, or billing is included.
 - Uploads enforce type signatures and a 10 MB limit. They are not malware-scanned in the application; production host scanning and backups must be configured by the operator.
 - The workspace loads a company's records in one request for this pilot. Large deployments should add server-side filtering/pagination before increasing the dataset substantially.
+- English/French covers interface copy (`lib/i18n.ts`). Data entered by HR (employee names, competency names/categories, activity log descriptions) is stored and shown as entered, in whichever language it was typed.
 
 See [Windows deployment](docs/windows-server.md), [API reference](docs/api.md), and [requirements memory](Memory/project-requirements.md).
 

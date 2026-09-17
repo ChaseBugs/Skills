@@ -1,9 +1,12 @@
 "use client";
 import { useState } from "react";
 import { ShieldCheck, ArrowRight, QrCode, Check } from "lucide-react";
+import { useLocale } from "./locale-provider";
+import { LangSwitch } from "./lang-switch";
 export function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const { t } = useLocale();
   return (
     <main className="login-page">
       <section className="login-story">
@@ -16,36 +19,39 @@ export function Login() {
           </strong>
         </div>
         <div>
-          <span className="eyebrow">PEOPLE. CAPABILITIES. CONFIDENCE.</span>
+          <span className="eyebrow">{t.login.eyebrow}</span>
           <h1>
-            The right skills.
+            {t.login.headline1}
             <br />
-            Ready for the job.
+            {t.login.headline2}
           </h1>
           <p>
-            One place for your people’s qualifications.
+            {t.login.subline1}
             <br />
-            One scan to see where they stand.
+            {t.login.subline2}
           </p>
           <div className="story-check">
-            <Check size={17} /> Employee skills and supporting diplomas
+            <Check size={17} /> {t.login.check1}
           </div>
           <div className="story-check">
-            <Check size={17} /> Live, accessible QR passports
+            <Check size={17} /> {t.login.check2}
           </div>
           <div className="story-check">
-            <Check size={17} /> Your data, connected to Excel
+            <Check size={17} /> {t.login.check3}
           </div>
         </div>
-        <small>Workforce competency management</small>
+        <small>{t.login.footerNote}</small>
       </section>
       <section className="login-form-wrap">
+        <div className="login-lang">
+          <LangSwitch compact />
+        </div>
         <div className="login-form">
           <span className="login-symbol">
             <QrCode size={28} />
           </span>
-          <h2>Welcome back</h2>
-          <p className="muted">Sign in to your company workspace.</p>
+          <h2>{t.login.welcomeBack}</h2>
+          <p className="muted">{t.login.signInPrompt}</p>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -56,7 +62,11 @@ export function Login() {
                 const r = await fetch("/api/auth/login", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(Object.fromEntries(data)),
+                  body: JSON.stringify({
+                    email: data.get("email"),
+                    password: data.get("password"),
+                    remember: data.get("remember") === "on",
+                  }),
                 });
                 const result = await r.json();
                 if (!r.ok) throw new Error(result.error);
@@ -68,7 +78,7 @@ export function Login() {
             }}
           >
             <label>
-              Email address
+              {t.login.emailAddress}
               <input
                 name="email"
                 type="email"
@@ -78,14 +88,18 @@ export function Login() {
               />
             </label>
             <label>
-              Password
+              {t.login.password}
               <input
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Enter your password"
+                placeholder={t.login.passwordPlaceholder}
                 required
               />
+            </label>
+            <label className="checkbox-label">
+              <input name="remember" type="checkbox" />
+              {t.login.rememberMe}
             </label>
             {error && (
               <div role="alert" className="alert error">
@@ -93,16 +107,13 @@ export function Login() {
               </div>
             )}
             <button className="button primary full" disabled={busy}>
-              {busy ? "Signing in…" : "Sign in"}
+              {busy ? t.login.signingIn : t.login.signIn}
               <ArrowRight size={17} />
             </button>
           </form>
           <div className="login-note">
             <ShieldCheck size={18} />
-            <span>
-              For Human Resources. Employees don’t need an account to use their
-              skills passport.
-            </span>
+            <span>{t.login.hrNote}</span>
           </div>
         </div>
       </section>

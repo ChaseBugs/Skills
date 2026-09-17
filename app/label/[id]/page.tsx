@@ -6,6 +6,8 @@ import { employeeColumns } from "@/lib/data";
 import type { Employee } from "@/lib/domain";
 import { Avatar } from "@/components/ui";
 import { PrintButton } from "@/components/print-button";
+import { getServerLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 export default async function Label({
   params,
@@ -14,6 +16,7 @@ export default async function Label({
 }) {
   const user = await currentUser();
   if (!user) redirect("/login");
+  const t = getDictionary(await getServerLocale());
   const { id } = await params;
   const e = (
     await rows<Employee>(
@@ -37,8 +40,8 @@ export default async function Label({
     <main className="print-page">
       <div className="print-toolbar">
         <div>
-          <h1>Helmet label</h1>
-          <p>Print at actual size, then check the QR with a phone.</p>
+          <h1>{t.label.title}</h1>
+          <p>{t.label.subtitle}</p>
         </div>
         <PrintButton />
       </div>
@@ -47,24 +50,17 @@ export default async function Label({
         <div>
           <h2>{e.name}</h2>
           <p>{company.name}</p>
-          <small>Scan for skills & diplomas</small>
+          <small>{t.label.scanNote}</small>
         </div>
         <img src={qr} alt={"QR code for " + e.name} />
       </section>
       <div className="print-notes">
-        {!e.photoId && (
-          <p>Add an employee photograph before printing the final label.</p>
-        )}
+        {!e.photoId && <p>{t.label.addPhoto}</p>}
+        <p>{t.label.widthNote}</p>
         <p>
-          Label width: 105 mm. Use a durable label suitable for your equipment.
+          {t.label.destination} <a href={url}>{url}</a>
         </p>
-        <p>
-          Destination: <a href={url}>{url}</a>
-        </p>
-        <p>
-          The QR must use your public domain before labels are issued. A
-          localhost link is only usable on this computer.
-        </p>
+        <p>{t.label.domainNote}</p>
       </div>
     </main>
   );
