@@ -357,6 +357,32 @@ const en = {
     hrNote:
       "For Human Resources. Employees don’t need an account to use their skills passport.",
   },
+  landing: {
+    navLogin: "Log in",
+    eyebrow: "DIGITAL SKILLS PASSPORTS FOR YOUR WORKFORCE",
+    title1: "See every qualification.",
+    title2: "One QR code at a time.",
+    subtitle:
+      "Skills gives HR one place to manage employee competencies, and gives every worker a live, scannable passport of their qualifications and diplomas.",
+    cta: "Sign in to your workspace",
+    featuresTitle: "Built for HR, open to everyone on site",
+    feature1Title: "One dashboard for HR",
+    feature1Desc:
+      "Manage employees, competencies and qualifications, with a clear view of what's expiring soon.",
+    feature2Title: "A passport in every pocket",
+    feature2Desc:
+      "Each employee gets a public, scannable QR passport. No account, no app to install.",
+    feature3Title: "Connected to Excel",
+    feature3Desc:
+      "Pull live company data into Excel with a revocable, company-scoped reporting key.",
+    shotOverviewAlt: "HR workspace overview dashboard",
+    shotOverviewCaption: "A clear overview for HR",
+    shotMatrixAlt: "Skills matrix showing employee qualifications",
+    shotMatrixCaption: "Spot qualification gaps at a glance",
+    shotPassportAlt: "Public employee skills passport on a phone",
+    shotPassportCaption: "A live passport, scannable on any phone",
+    footerNote: "Workforce competency management",
+  },
   publicProfile: {
     tag: "DIGITAL SKILLS PASSPORT",
     verifiedAndValid: "Verified & valid",
@@ -756,6 +782,35 @@ const fr: typeof en = {
     signIn: "Se connecter",
     hrNote:
       "Réservé aux ressources humaines. Les employés n’ont pas besoin de compte pour utiliser leur passeport de compétences.",
+  },
+  landing: {
+    navLogin: "Connexion",
+    eyebrow: "PASSEPORTS NUMÉRIQUES DE COMPÉTENCES POUR VOTRE EFFECTIF",
+    title1: "Visualisez chaque qualification.",
+    title2: "Un QR code à la fois.",
+    subtitle:
+      "Skills donne aux RH un seul endroit pour gérer les compétences des employés, et donne à chaque travailleur un passeport en direct et scannable de ses qualifications et diplômes.",
+    cta: "Se connecter à votre espace de travail",
+    featuresTitle: "Conçu pour les RH, accessible à tous sur le terrain",
+    feature1Title: "Un tableau de bord pour les RH",
+    feature1Desc:
+      "Gérez les employés, les compétences et les qualifications, avec une vue claire de ce qui expire bientôt.",
+    feature2Title: "Un passeport dans chaque poche",
+    feature2Desc:
+      "Chaque employé reçoit un passeport QR public et scannable. Aucun compte, aucune application à installer.",
+    feature3Title: "Connecté à Excel",
+    feature3Desc:
+      "Importez les données en direct de l’entreprise dans Excel avec une clé de reporting révocable et limitée à l’entreprise.",
+    shotOverviewAlt: "Tableau de bord de l’espace de travail RH",
+    shotOverviewCaption: "Une vue claire pour les RH",
+    shotMatrixAlt:
+      "Matrice des compétences montrant les qualifications des employés",
+    shotMatrixCaption: "Repérez les écarts de qualification en un coup d’œil",
+    shotPassportAlt:
+      "Passeport de compétences public d’un employé sur un téléphone",
+    shotPassportCaption:
+      "Un passeport en direct, scannable sur n’importe quel téléphone",
+    footerNote: "Gestion des compétences des effectifs",
   },
   publicProfile: {
     tag: "PASSEPORT NUMÉRIQUE DE COMPÉTENCES",

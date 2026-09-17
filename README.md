@@ -4,7 +4,8 @@ A working multi-company skills management application using **Next.js, TypeScrip
 
 ## Included
 
-- HR-only sign-in with company memberships; employees have no accounts.
+- A public landing page at `/` for signed-out visitors, with product screenshots and a login link; signed-in users skip straight to the workspace.
+- HR-only sign-in with company memberships and a "remember me" option (30-day session vs. 12 hours); employees have no accounts.
 - HR employee creation/editing, photo upload, active/inactive status and unique employee ID/SSN per company.
 - Competency catalogue, qualification records, optional expiry dates, HR verification and revocation.
 - HR-only PDF/PNG/JPEG diploma uploads; live public passport access without sign-in.
